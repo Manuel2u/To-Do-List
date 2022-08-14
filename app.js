@@ -4,21 +4,14 @@ app.set('view engine', 'ejs');
 const bodyParser = require("body-parser");
 app.use(bodyParser.urlencoded({extended : true}));
 app.use(express.static("public"));
+const date = require(__dirname + "/date.js");
 
-let list = ["Drink","Learn","Eat"];
+let today = date(); 
 
-let today = new Date();
-
-let options = {
-  weekday:"long",
-  day:"numeric",
-  month:"long",
-}
-
-let date = today.toLocaleDateString("en-US", options)
+let list = [];
 
 app.get("/", function(req,res){
-   res.render("index",{kindOfDay:date, newITem:list});
+   res.render("index",{kindOfDay:today, newITem:list});
 });
 
 app.post("/", function(req,res){
