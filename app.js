@@ -8,6 +8,12 @@ app.use(express.static("public"));
 const date = require(__dirname + "/date.js");
 mongoose.connect("mongodb://localhost:27017/todolistDB", {useNewUrlParser: true});
 
+const listSchema = new mongoose.Schema({
+  item : "string"
+});
+
+const List = mongoose.model('list', listSchema);
+
 let today = date();
 
 let list = [];
