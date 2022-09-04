@@ -28,12 +28,17 @@ let defaultItems = [item1, item2];
 
 let today = date();
 
-let list = [];
+const customSchema = {
+  name: "string",
+  list: [listSchema]
+}
 
-app.get("/", function (req, res) {
-  List.find({}, function (err, foundItems) {
+const Custom = mongoose.model("custom", customSchema);
+
+app.get("/", function(req, res) {
+  List.find({}, function(err, foundItems) {
     if (foundItems.length === 0) {
-      List.insertMany(defaultItems, function (err) {
+      List.insertMany(defaultItems, function(err) {
         if (err) {
           console.log(err);
         } else {
@@ -42,31 +47,66 @@ app.get("/", function (req, res) {
       });
       res.redirect("/");
     } else {
-      res.render("index", {
-        kindOfDay: today,
-        newListItems: foundItems
-      });
+      res.render("index", {kindOfDay: today, newListItems: foundItems});
     }
   });
 });
 
-app.post("/", function (req, res) {
+app.get("/:customListname", function(req, res) {
+
+  const customListname = req.params.customListname;
+
+  Custom.findOne({name: customListname}, function(err, custom) {
+    if (!err) {
+      if (!custom) {
+        let firstList = new Custom({
+          name: customListname,
+          list: defaultItems
+        });
+
+        firstList.save();
+        res.redirect("/" + customListname);
+
+      } else {
+        res.render("index" , {kindOfDay: custom.name, newListItems: custom.list});
+      }
+    }
+  });
+
+
+
+
+
+});
+
+app.post("/", function(req, res) {
   let newItem = req.body.new_item;
+  let customItem = req.body.button;
 
   let newListItem = new List({
     name: newItem
   });
 
-  newListItem.save();
+  if(customItem === today ){
+    newListItem.save();
 
-  res.redirect("/");
-});
+    res.redirect("/");
+
+    }else{
+      Custom.findOne({name:customItem}, function(err, foundList){
+          foundList.list.push(newListItem);
+          foundList.save();
+          res.redirect("/"+customItem);
+        });
+    }
+
+  });
 
 
-app.post("/delete", function (req, res) {
+app.post("/delete", function(req, res) {
   const checkedItemId = req.body.checkbox;
   console.log(checkedItemId);
-  List.findByIdAndRemove(checkedItemId, function (err) {
+  List.findByIdAndRemove(checkedItemId, function(err) {
     if (!err) {
       console.log("Successfully deleted checked item");
       res.redirect("/");
@@ -75,6 +115,6 @@ app.post("/delete", function (req, res) {
 });
 
 
-app.listen(3000, function () {
+app.listen(3000, function() {
   console.log("Server Started at Port 3000...");
 });
