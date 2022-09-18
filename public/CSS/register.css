@@ -48,16 +48,17 @@ input[type=text], input[type=password] {
     width: 100%;
     opacity: 0.9;
   }
-  
+
   button:hover {
     opacity:1;
   }
   
   /* Extra styles for the cancel button */
   .cancelbtn {
-    padding: 14px 20px;
-    background-color: #FF9E21 ;
+    padding: 14x 20px;
+    background-color: #FF9E21;
     color: #fff;
+    /* margin-top: 5px; */
   }
   
   /* Float cancel and signup buttons and add an equal width */

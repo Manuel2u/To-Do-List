@@ -2,18 +2,43 @@ const express = require("express");
 const mongoose = require("mongoose");
 const app = express();
 const _ = require("lodash");
-app.set('view engine', 'ejs');
+const passport = require("passport");
+const PassportLocalMongoose = require("passport-local-mongoose");
+const session = require("express-session");
 const bodyParser = require("body-parser");
+
+app.set('view engine', 'ejs');
+
+
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(express.static("public"));
+app.use(session({
+  secret:"yourSecret",
+  resave: false,
+  saveUninitialized: false
+}));
+app.use(passport.initialize());
+app.use(passport.session());
+
 const date = require(__dirname + "/date.js");
 mongoose.connect("mongodb://localhost:27017/todolistDB", {useNewUrlParser: true});
 
-const listSchema = {
-  name: "string"
-};
+const listSchema = new mongoose.Schema({
+  name: String
+});
 
-const List = mongoose.model('list', listSchema);
+const userSchema = new mongoose.Schema({
+    email: String,
+    password: String,
+    googleId: String,
+    secret : String,
+    list : listSchema
+});
+
+userSchema.plugin(PassportLocalMongoose);
+
+const List = mongoose.model("list", listSchema);
+const User = mongoose.model('user', userSchema);
 
 let item1 = new List({
   name: "Welcome to your ToDo-List"
@@ -36,28 +61,82 @@ const customSchema = {
 
 const Custom = mongoose.model("custom", customSchema);
 
-app.get("/", function(req, res) {
-  List.find({}, function(err, foundItems) {
-    if (foundItems.length === 0) {
-      List.insertMany(defaultItems, function(err) {
-        if (err) {
-          console.log(err);
-        } else {
-          console.log("Successfully saved default items to DB");
-        }
-      });
-      res.redirect("/");
-    } else {
-      res.render("index", {kindOfDay: today, newListItems: foundItems});
-    }
+passport.use(User.createStrategy());
+
+passport.serializeUser(function(user, cb) {
+  process.nextTick(function() {
+    return cb(null, {
+      id: user.id,
+    });
+  });
+});
+
+passport.deserializeUser(function(user, cb) {
+  process.nextTick(function() {
+    return cb(null, user);
   });
 });
 
 app.get("/login", function(req, res){
   res.render("login");
+})
+
+app.get("/", function(req, res){
+  res.render("register");
 });
 
-app.get("/:customListname", function(req, res) {
+app.get("/list", function(req, res) {
+  if(req.isAuthenticated()){
+    List.find({}, function(err, foundItems) {
+      if (foundItems.length === 0) {
+        List.insertMany(defaultItems, function(err) {
+          if (err) {
+            console.log(err);
+          } else {
+            console.log("Successfully saved default items to DB");
+          }
+        });
+        res.redirect("/list");
+      } else {
+        res.render("index", {kindOfDay: today, newListItems: foundItems});
+      }
+    });
+  }else{
+    res.redirect("/login");
+  }
+});
+
+app.post("/", function(req, res){
+  User.register({username : req.body.username}, req.body.password, function(err, user){
+    if(err){
+      console.log(err);
+    }else{
+      passport.authenticate("local")(req,res,function(){
+        res.redirect("/list");
+      });
+    }
+  });
+});
+
+app.post("/login", function(req, res){
+  const user = new User({
+    username : req.body.username,
+    password : req.body.password
+  });
+
+  req.login(user, function(err){
+    if(err){
+      console.log(err);
+    }else{
+      passport.authenticate("local")(req,res,function(){
+        res.redirect("/list");
+      });
+    }
+  });
+
+});
+
+app.get("/list/:customListname", function(req, res) {
 
   const customListname = _.capitalize(req.params.customListname);
 
@@ -84,7 +163,7 @@ app.get("/:customListname", function(req, res) {
 
 });
 
-app.post("/", function(req, res) {
+app.post("/list", function(req, res) {
   let newItem = req.body.new_item;
   let customItem = req.body.button;
 
@@ -95,7 +174,7 @@ app.post("/", function(req, res) {
   if(customItem === today ){
     newListItem.save();
 
-    res.redirect("/");
+    res.redirect("/list");
 
     }else{
       Custom.findOne({name:customItem}, function(err, foundList){
@@ -117,7 +196,7 @@ app.post("/delete", function(req, res) {
     List.findByIdAndRemove(checkedItemId, function(err) {
       if (!err) {
         console.log("Successfully deleted checked item");
-        res.redirect("/");
+        res.redirect("/list");
       }
     });
   }else{

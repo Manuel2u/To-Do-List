@@ -11,23 +11,23 @@
 
 <body>
     <center>
-        <form action="action_page.php">
+        <form action="/login" method="post">
             <div class="container">
                 <h1>Login</h1>
                 <hr>
                 <label for="email"><b>Email</b></label>
-                <input type="text" placeholder="Enter Email" name="email" required>
+                <input type="text" placeholder="Enter Email" name="username" required>
 
                 <label for="psw"><b>Password</b></label>
-                <input type="password" placeholder="Enter Password" name="psw" required>
+                <input type="password" placeholder="Enter Password" name="password" required>
         
                 <label>
                     <input type="checkbox" checked="checked" name="remember" style="margin-bottom:15px"> Remember me
                 </label>
 
                 <div class="clearfix">
-                    <button type="button" class="cancelbtn">Cancel</button>
-                    <button type="submit" class="signupbtn">Sign Up</button>
+                    <button type="button" onclick="signUp();" class="cancelbtn">Sign Up</button>
+                    <button type="submit" class="signupbtn">Sign in</button>
                 </div>
             </div>
         </form>
@@ -42,9 +42,14 @@
                 <img class="google-icon"
                     src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" />
             </div>
-            <p class="btn-text"><a href="#"><b>Sign up with google</b></a></p>
+            <p class="btn-text"><a href="#"><b>Sign in with google</b></a></p>
         </div>
     </center>
+    <script>
+        function signUp(){
+            window.location='http://localhost:3000';
+        }
+    </script>
 </body>
 
 </html>
