@@ -6,6 +6,8 @@ const passport = require("passport");
 const PassportLocalMongoose = require("passport-local-mongoose");
 const session = require("express-session");
 const bodyParser = require("body-parser");
+const GoogleStrategy = require('passport-google-oauth20').Strategy;
+const findOrCreate = require('mongoose-findorcreate');
 
 app.set('view engine', 'ejs');
 
@@ -40,6 +42,7 @@ const userSchema = new mongoose.Schema({
 });
 
 userSchema.plugin(PassportLocalMongoose);
+userSchema.plugin(findOrCreate);
 
 const List = mongoose.model("list", listSchema);
 const User = mongoose.model('user', userSchema);
@@ -83,9 +86,9 @@ passport.deserializeUser(function (user, cb) {
 
 
 passport.use(new GoogleStrategy({
-  clientID: GOOGLE_CLIENT_ID,
-  clientSecret: GOOGLE_CLIENT_SECRET,
-  callbackURL: "http://www.example.com/auth/google/callback"
+  clientID: PROCESS.ENV.CLIENT_ID,
+  clientSecret: PROCESS.ENV.CLIENT_SECRET,
+  callbackURL: "http://localhost:3000/auth/google/list"
 },
 function(accessToken, refreshToken, profile, cb) {
   User.findOrCreate({ googleId: profile.id }, function (err, user) {
@@ -93,6 +96,15 @@ function(accessToken, refreshToken, profile, cb) {
   });
 }
 ));
+
+app.get('/auth/google',
+  passport.authenticate('google', { scope: ['profile'] }));
+
+app.get('/auth/google/callback', 
+  passport.authenticate('google', { failureRedirect: '/login' }),
+  function(req, res) {
+    res.redirect('/list');
+  });
 
 app.get("/login", function (req, res) {
   res.render("login");
@@ -105,24 +117,19 @@ app.get("/", function (req, res) {
 
 app.get("/list", function(req, res) {
   if(req.isAuthenticated()){
-    List.find({}, function(err, foundItems) {
-      if (foundItems.length === 0) {
-        List.insertMany(defaultItems, function(err) {
-          if (err) {
-            console.log(err);
-          } else {
-            console.log("Successfully saved default items to DB");
-          }
+    User.findById(req.user.id, function(err, foundUser) {
+      if (foundUser) {
+        defaultItems.forEach(function(items){
+          foundUser.list.unshift(items);
         });
-        res.redirect("/list");
-      } else {
-        res.render("index", {kindOfDay: today, newListItems: foundItems});
-      }
+      } 
+      res.render("index", {kindOfDay: today, newListItems: foundUser.list});
     });
   }else{
     res.redirect("/login");
   }
 });
+
 
 app.post("/", function (req, res) {
   User.register({
@@ -251,6 +258,6 @@ app.post("/delete", function (req, res) {
 });
 
 
-app.listen(3000, function () {
+app.listen(PROCESS.ENV.PORT||3000, function () {
   console.log("Server Started at Port 3000...");
 });
