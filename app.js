@@ -33,7 +33,10 @@ mongoose.connect(mongoDBURL, {
 });
 
 const listSchema = new mongoose.Schema({
-  name: String
+  name: {
+    type: String,
+    required: [true, "List item name is required"]
+  }
 });
 
 const userSchema = new mongoose.Schema({
