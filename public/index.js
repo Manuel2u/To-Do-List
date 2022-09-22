@@ -12,5 +12,5 @@ function registerErrorMessage() {
 }
 
 function login(){
-    window.location='http://localhost:3000/login';
+    window.location='https://to-do-list-xx.herokuapp.com/login';
 }
