@@ -5,9 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
   <link rel="stylesheet" href="CSS/styles.css">
+  <link rel="icon" href="favicon.png">
 <title>To-Do List</title>
 </head>
 <body>
+
 
 <div class="box" id="heading">
   <h1> <%=kindOfDay%> </h1>
@@ -29,7 +31,11 @@
     <input type="text" name="new_item" placeholder="New Item" autocomplete="off">
     <button type="submit" name="button" value="<%=kindOfDay%>" >+</button>
   </form>
-
+  
 </div>
+
+  <div class="logout">
+    <a href="/logout">Logout</a>
+  </div>
 </body>
 </html>

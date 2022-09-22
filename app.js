@@ -8,6 +8,7 @@ const session = require("express-session");
 const bodyParser = require("body-parser");
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const findOrCreate = require('mongoose-findorcreate');
+const dotenv = require('dotenv').config();
 
 app.set('view engine', 'ejs');
 
@@ -24,8 +25,10 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
+const mongoDBURL = process.env.MONGO_DB_URL;
+
 const date = require(__dirname + "/date.js");
-mongoose.connect("mongodb://localhost:27017/todolistDB", {
+mongoose.connect(mongoDBURL, {
   useNewUrlParser: true
 });
 
@@ -86,8 +89,8 @@ passport.deserializeUser(function (user, cb) {
 
 
 passport.use(new GoogleStrategy({
-  clientID: PROCESS.ENV.CLIENT_ID,
-  clientSecret: PROCESS.ENV.CLIENT_SECRET,
+  clientID: process.env.CLIENT_ID,
+  clientSecret: process.env.CLIENT_SECRET,
   callbackURL: "http://localhost:3000/auth/google/list"
 },
 function(accessToken, refreshToken, profile, cb) {
@@ -100,7 +103,7 @@ function(accessToken, refreshToken, profile, cb) {
 app.get('/auth/google',
   passport.authenticate('google', { scope: ['profile'] }));
 
-app.get('/auth/google/callback', 
+app.get('/auth/google/list', 
   passport.authenticate('google', { failureRedirect: '/login' }),
   function(req, res) {
     res.redirect('/list');
@@ -112,6 +115,15 @@ app.get("/login", function (req, res) {
 
 app.get("/", function (req, res) {
   res.render("register");
+});
+
+app.get("/logout", function(req,res){
+  req.logout(function(err){
+      if(err){
+          console.log(err);
+      }
+  });
+  res.redirect("/");
 });
 
 
@@ -130,11 +142,12 @@ app.get("/list", function(req, res) {
   }
 });
 
-
 app.post("/", function (req, res) {
-  User.register({
-    username: req.body.username
-  }, req.body.password, function (err, user) {
+  const username = req.body.username;
+  const password = req.body.password;
+  const confirmPassword = req.body.passwordConfirm;
+  if (password === confirmPassword) {
+  User.register({username: req.body.username}, req.body.password, function (err, user){
     if (err) {
       console.log(err);
     } else {
@@ -143,6 +156,12 @@ app.post("/", function (req, res) {
       });
     }
   });
+} else {
+  setTimeout(function () {
+    res.redirect("/");
+  }
+  , 3000);
+};
 });
 
 app.post("/login", function (req, res) {
@@ -155,7 +174,7 @@ app.post("/login", function (req, res) {
     if (err) {
       console.log(err);
     } else {
-      passport.authenticate("local")(req, res, function () {
+      passport.authenticate("local", { failureRedirect: '/login', failureMessage: true })(req, res, function () {
         res.redirect("/list");
       });
     }
@@ -232,11 +251,18 @@ app.post("/delete", function (req, res) {
   const customList = req.body.customList;
 
   if (customList === today) {
-    console.log(checkedItemId);
-    List.findByIdAndRemove(checkedItemId, function (err) {
-      if (!err) {
-        console.log("Successfully deleted checked item");
-        res.redirect("/list");
+    User.findById(req.user.id, function (err, foundUser) {
+      if (err) {
+        console.log(err);
+      } else {
+        if (foundUser) {
+          foundUser.list = foundUser.list.filter(function (item) {
+            return item._id != checkedItemId;
+          });
+          foundUser.save(function () {
+            res.redirect("/list");
+          });
+        }
       }
     });
   } else {
@@ -258,6 +284,6 @@ app.post("/delete", function (req, res) {
 });
 
 
-app.listen(PROCESS.ENV.PORT||3000, function () {
+app.listen(process.env.PORT||3000, function () {
   console.log("Server Started at Port 3000...");
 });
