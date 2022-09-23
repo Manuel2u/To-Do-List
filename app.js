@@ -33,10 +33,7 @@ mongoose.connect(mongoDBURL, {
 });
 
 const listSchema = new mongoose.Schema({
-  name: {
-    type: String,
-    required: true
-  }
+  name: String,
 });
 
 const userSchema = new mongoose.Schema({
@@ -217,6 +214,7 @@ app.post("/list", function (req, res) {
   let newItem = req.body.new_item;
   let customItem = req.body.button;
 
+  if(newItem !== ""){
   const newListItem = new List({
     name: newItem
   });
@@ -244,6 +242,9 @@ app.post("/list", function (req, res) {
       }
     }
   });
+}else{
+  res.redirect("/list");
+};
 
 });
 
