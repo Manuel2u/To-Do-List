@@ -17,7 +17,7 @@ function login(){
 
 function validation(){
     const validator = document.getElementById("validator").value;
-    if(validator == ""){
+    if(validator === ""){
         alert("Please List is required");
     }
 }
