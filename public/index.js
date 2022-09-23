@@ -16,9 +16,8 @@ function login(){
 }
 
 function validation(){
-    var validator = document.getElementById("validator").value;
-    if(validator === ""){
-        alert("Please List item cannot be empty");
+    const validator = document.getElementById("validator").value;
+    if(validator == ""){
+        alert("Please List is required");
     }
-
 }
