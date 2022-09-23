@@ -14,3 +14,11 @@ function registerErrorMessage() {
 function login(){
     window.location='https://to-do-list-xx.herokuapp.com/login';
 }
+
+function validation(){
+    var validator = document.getElementById("validator").value;
+    if(validator === ""){
+        alert("Please List item cannot be empty");
+    }
+
+}

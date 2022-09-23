@@ -146,7 +146,6 @@ app.get("/list", function(req, res) {
 });
 
 app.post("/", function (req, res) {
-  const username = req.body.username;
   const password = req.body.password;
   const confirmPassword = req.body.passwordConfirm;
   if (password === confirmPassword) {
